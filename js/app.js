@@ -79,6 +79,10 @@ const PERSONALITIES = {
     "麻花": {
         image: "./asset/iron-man.png",
         description: "你的写作人格特点为：麻花。你不把写作当作神圣的使命与艰难折磨，同时时刻有着一份做人的真诚；你关注着那种写作手段可以获得更多的青睐，但也不骄不躁放松自己已经认定的写作路径。纠结的麻花是你的底色，正在被写作的油锅炸得金黄酥脆。"
+    },
+    "新人": {
+        image: "./asset/iron-man.png",
+        description: "你触发了隐藏结局：新人。你的创作历程才刚刚开始，写作的大门永远向你敞开。祝你笔耕不辍，愿你写得开心。"
     }
 };
 
@@ -300,9 +304,15 @@ function showResults() {
         }
     });
 
-    // 判断人格类型
-    const personalityType = determinePersonality(categoryScores);
-    const personalityData = PERSONALITIES[personalityType] || PERSONALITIES["铁人"];
+    // 判断人格类型（如果触发隐藏结果，显示"新人"）
+    let personalityType, personalityData;
+    if (triggerHiddenResult) {
+        personalityType = "新人";
+        personalityData = PERSONALITIES["新人"];
+    } else {
+        personalityType = determinePersonality(categoryScores);
+        personalityData = PERSONALITIES[personalityType] || PERSONALITIES["铁人"];
+    }
     
     // 设置人格图片和名称
     elements.personalityImage.src = personalityData.image;
