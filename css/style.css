@@ -47,9 +47,9 @@ body {
 
 .start-page .subtitle {
     color: #8899aa;
-    font-size: 0.9rem;
+    font-size: 20px;
     margin-bottom: 16px;
-    font-style: italic;
+    font-weight: bold;
 }
 
 .start-page p {
@@ -72,12 +72,12 @@ body {
 
 .start-page .info p {
     margin-bottom: 10px;
+    font-size: 0.85rem;
+    color: #8899aa;
 }
 
 .start-page .info p:last-child {
     margin-bottom: 0;
-    font-size: 0.85rem;
-    color: #8899aa;
 }
 
 .start-page .credits {
