@@ -8,25 +8,25 @@ const CONFIG = {
             name: "勤奋/随性",
             icon: "📝",
             maxScore: 15,
-            description: "有关写作精力状态的评估。越偏向\"勤奋\"的作者越倾向于使用更多的精力，更有规划地持续写作，生活中写作占据的时间也往往更多；越偏向\"随性\"的作者越倾向于顺其自然，静待灵感到来，捕捉更舒适的写作时机和更好的写作状态。"
+            description: "有关写作精力状态的评估。越偏向“勤奋”的作者越倾向于使用更多的精力，更有规划地持续写作，生活中写作占据的时间也往往更多；越偏向“随性”的作者越倾向于顺其自然，静待灵感到来，捕捉更舒适的写作时机和更好的写作状态。"
         },
         {
             name: "竞争/表达",
             icon: "🏆",
             maxScore: 15,
-            description: "有关写作理念的评估。越偏向\"竞争\"的作者越倾向于获得奖励和光环，期待作品可以得到更多认可以及更多赞美；越偏向\"表达\"的作者越倾向于自我表达，认为诉说内心世界比普世的欢呼更重要，写作是为了吸引志同道合的人。"
+            description: "有关写作理念的评估。越偏向“竞争”的作者越倾向于获得奖励和光环，期待作品可以令得到更多认可以及更多赞美；越偏向“表达”的作者越倾向于自我表达，认为诉说内心世界比普世的欢呼更重要，写作是为了吸引志同道合的人。"
         },
         {
             name: "方法/直觉",
             icon: "💡",
             maxScore: 15,
-            description: "有关写作路径的评估。越偏向\"方法\"的作者越倾向于追求更惊奇的写作技巧，用巧妙的结构、漂亮的设定乃至叙诡技术来为作品增添色彩；越偏向\"直觉\"的作者越倾向于专注故事本身的情绪与内核，用感受的精确传达来打动读者的心灵。"
+            description: "有关写作路径的评估。越偏向“方法”的作者越倾向于追求更惊奇的写作技巧，用巧妙的结构、漂亮的设定乃至叙诡技术来为作品增添色彩；越偏向“直觉”的作者越倾向于专注故事本身的情绪与内核，用感受的精确传达来打动读者的心灵。"
         },
         {
             name: "扼要/细腻",
             icon: "🎨",
             maxScore: 15,
-            description: "有关写作风格的评估。越偏向\"扼要\"的作者越倾向于用更简明的句子书写自己的故事，文章信息密度相对更高，且相比描写，更注重思想的传达；越偏向\"细腻\"的作者越倾向于故事细节的构建和事物的描摹，文章节奏相对缓慢，往往更善于创作令读者身临其境的氛围。"
+            description: "有关写作风格的评估。越偏向“扼要”的作者越倾向于用更简明的句子书写自己的故事，文章信息密度相对更高，且相比描写，更注重思想的传达；越偏向“细腻”的作者越倾向于故事细节的构建和事物的描摹，文章节奏相对缓慢，往往更善于创作令读者身临其境的氛围。"
         }
     ]
 };
@@ -179,6 +179,8 @@ const elements = {
     personalityDescription: document.getElementById('personalityDescription'),
     personalityAnalysis: document.getElementById('personalityAnalysis'),
     analysisSection: document.getElementById('analysisSection'),
+    dimensionAnalysisSection: document.getElementById('dimensionAnalysisSection'),
+    dimensionAnalysisContent: document.getElementById('dimensionAnalysisContent'),
     resultTitle: document.getElementById('resultTitle'),
     hiddenPersonalitySection: document.getElementById('hiddenPersonalitySection'),
     hiddenPersonalityImage: document.getElementById('hiddenPersonalityImage'),
@@ -186,6 +188,8 @@ const elements = {
     hiddenPersonalityDescription: document.getElementById('hiddenPersonalityDescription'),
     hiddenPersonalityAnalysis: document.getElementById('hiddenPersonalityAnalysis'),
     hiddenAnalysisSection: document.getElementById('hiddenAnalysisSection'),
+    hiddenDimensionAnalysisSection: document.getElementById('hiddenDimensionAnalysisSection'),
+    hiddenDimensionAnalysisContent: document.getElementById('hiddenDimensionAnalysisContent'),
     imageModal: document.getElementById('imageModal'),
     resultImage: document.getElementById('resultImage'),
     saveBtn: document.getElementById('saveBtn'),
@@ -221,6 +225,18 @@ function updateSaveUi() {
     if (elements.saveArea) {
         elements.saveArea.style.display = isWeChat() ? 'flex' : 'none';
     }
+}
+
+function buildDimensionAnalysisHtml() {
+    return CONFIG.CATEGORIES.map(cat => {
+        const [leftLabel, rightLabel] = cat.name.split('/');
+        return `
+            <div class="dimension-analysis-item">
+                <div class="dimension-analysis-name">${leftLabel} / ${rightLabel}</div>
+                <div class="dimension-analysis-text">${cat.description}</div>
+            </div>
+        `;
+    }).join('');
 }
 
 // 加载问题数据
@@ -407,14 +423,17 @@ function showResults() {
     
     // 设置人格描述
     elements.personalityDescription.textContent = displayPersonalityData.description;
+    elements.dimensionAnalysisContent.innerHTML = buildDimensionAnalysisHtml();
 
     // 如果是新人（触发隐藏结局），隐藏维度框和人格描述标题
     if (triggerHiddenResult) {
         elements.dimensionsSection.style.display = 'none';
+        elements.dimensionAnalysisSection.style.display = 'none';
         const descTitle = elements.descriptionSection.querySelector('.section-title');
         if (descTitle) descTitle.style.display = 'none';
     } else {
         elements.dimensionsSection.style.display = 'block';
+        elements.dimensionAnalysisSection.style.display = 'block';
         const descTitle = elements.descriptionSection.querySelector('.section-title');
         if (descTitle) descTitle.style.display = 'block';
     }
@@ -436,6 +455,8 @@ function showResults() {
         elements.hiddenPersonalityImage.src = normalPersonalityData.image;
         elements.hiddenPersonalityName.textContent = normalPersonalityType;
         elements.hiddenPersonalityDescription.textContent = normalPersonalityData.description;
+        elements.hiddenDimensionAnalysisContent.innerHTML = buildDimensionAnalysisHtml();
+        elements.hiddenDimensionAnalysisSection.style.display = 'block';
         // 隐藏人格的结果解析
         if (normalPersonalityData.analysis) {
             elements.hiddenAnalysisSection.style.display = 'block';
@@ -482,15 +503,11 @@ function showResults() {
                     <div class="bar-fill left-fill"></div>
                     <div class="bar-marker left-marker"></div>
                 </div>
-                <button class="collapse-btn" data-index="${index}">
-                    <span class="collapse-arrow">▼</span>
-                </button>
                 <div class="bar-side bar-right">
                     <div class="bar-fill right-fill"></div>
                     <div class="bar-marker right-marker"></div>
                 </div>
             </div>
-            <div class="result-description" data-index="${index}">${cat.description}</div>
         `;
         targetContainer.appendChild(item);
 
@@ -520,15 +537,6 @@ function showResults() {
                 leftMarker.classList.remove('visible');
             }
         }, 100);
-    });
-
-    // 绑定折叠按钮事件
-    targetContainer.querySelectorAll('.collapse-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const idx = btn.getAttribute('data-index');
-            const item = targetContainer.querySelector(`.result-item.category-${idx}`);
-            item.classList.toggle('collapsed');
-        });
     });
 
     // 清除保存的数据
