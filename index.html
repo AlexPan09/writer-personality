@@ -97,7 +97,11 @@
             </div>
             
             <button class="btn restart-btn" onclick="restartQuiz()">重新测试</button>
-            <button class="btn btn-secondary save-btn" onclick="saveResultImage()">保存图片</button>
+            <button class="btn btn-secondary save-btn" id="saveBtn" onclick="saveResultImage()">保存图片</button>
+            <div class="save-area" id="saveArea">
+                <img id="saveImage" class="save-image" alt="长按保存测试结果">
+                <span id="saveHint">图片生成中...</span>
+            </div>
         </div>
     </div>
 
@@ -116,6 +120,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="./js/vendor/qrcode-generator.js"></script>
     <script src="./js/app.js"></script>
 </body>
 </html>

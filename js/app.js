@@ -2,6 +2,7 @@
 const CONFIG = {
     STORAGE_KEY: 'writer_personality_test',
     STORAGE_EXPIRE: 24 * 60 * 60 * 1000, // 24小时过期
+    SHARE_URL: 'https://alexpan09.github.io/writer-personality/',
     CATEGORIES: [
         {
             name: "勤奋/随性",
@@ -154,6 +155,7 @@ let currentQuestion = 0;
 let answers = [];
 let questions = [];
 let triggerHiddenResult = false; // 标记是否触发隐藏结果
+let currentSaveImageUrl = '';
 
 // DOM元素
 const elements = {
@@ -185,7 +187,11 @@ const elements = {
     hiddenPersonalityAnalysis: document.getElementById('hiddenPersonalityAnalysis'),
     hiddenAnalysisSection: document.getElementById('hiddenAnalysisSection'),
     imageModal: document.getElementById('imageModal'),
-    resultImage: document.getElementById('resultImage')
+    resultImage: document.getElementById('resultImage'),
+    saveBtn: document.getElementById('saveBtn'),
+    saveArea: document.getElementById('saveArea'),
+    saveImage: document.getElementById('saveImage'),
+    saveHint: document.getElementById('saveHint')
 };
 
 // 初始化
@@ -193,6 +199,28 @@ async function init() {
     await loadQuestions();
     loadFromStorage();
     updateNavigationButtons();
+    updateSaveUi();
+}
+
+function revokeCurrentSaveImageUrl() {
+    if (currentSaveImageUrl && currentSaveImageUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(currentSaveImageUrl);
+    }
+    currentSaveImageUrl = '';
+}
+
+function isWeChat() {
+    return /micromessenger/i.test(navigator.userAgent);
+}
+
+function updateSaveUi() {
+    if (elements.saveBtn) {
+        elements.saveBtn.style.display = isWeChat() ? 'none' : 'block';
+    }
+
+    if (elements.saveArea) {
+        elements.saveArea.style.display = isWeChat() ? 'flex' : 'none';
+    }
 }
 
 // 加载问题数据
@@ -473,17 +501,18 @@ function showResults() {
             const leftMarker = item.querySelector('.bar-marker.left-marker');
             const rightMarker = item.querySelector('.bar-marker.right-marker');
 
+            
             const normalizedScore = percentage;
 
             if (normalizedScore >= 50) {
-                const fillWidth = Math.min(100, (normalizedScore - 50) * 2);
+                const fillWidth = Math.round(Math.min(100, (percentage - 50) * 2) / 100 * 90 + 10);
                 leftFill.style.width = `${fillWidth}%`;
                 rightFill.style.width = '0';
                 leftMarker.style.right = `calc(${fillWidth}% - 12px)`;
                 leftMarker.classList.add('visible');
                 rightMarker.classList.remove('visible');
             } else {
-                const fillWidth = Math.min(100, (50 - normalizedScore) * 2);
+                const fillWidth = Math.round(Math.min(100, (50 - percentage) * 2) / 100 * 90 + 10);
                 rightFill.style.width = `${fillWidth}%`;
                 leftFill.style.width = '0';
                 rightMarker.style.left = `calc(${fillWidth}% - 12px)`;
@@ -504,6 +533,13 @@ function showResults() {
 
     // 清除保存的数据
     localStorage.removeItem(CONFIG.STORAGE_KEY);
+
+    updateSaveUi();
+    if (isWeChat()) {
+        prepareSaveImage();
+    } else {
+        resetSaveArea();
+    }
 }
 
 // 重新测试
@@ -512,15 +548,11 @@ function restartQuiz() {
     answers = new Array(questions.length).fill(null);
     triggerHiddenResult = false; // 重置隐藏结果标记
     localStorage.removeItem(CONFIG.STORAGE_KEY);
+    revokeCurrentSaveImageUrl();
+    resetSaveArea();
 
     elements.resultPage.style.display = 'none';
     elements.startPage.classList.remove('hidden');
-}
-
-// 检测是否为微信环境
-function isWeChat() {
-    const ua = navigator.userAgent.toLowerCase();
-    return ua.indexOf('micromessenger') !== -1;
 }
 
 function wait(ms) {
@@ -640,6 +672,34 @@ async function renderGradientAvatar(img) {
     return canvas.toDataURL('image/png');
 }
 
+async function createQrCodeDataUrl(text) {
+    if (typeof window.qrcode !== 'function') {
+        throw new Error('二维码生成库加载失败');
+    }
+
+    const qr = window.qrcode(0, 'M');
+    qr.addData(text);
+    qr.make();
+    return qr.createDataURL(4, 1);
+}
+
+async function appendShareQrCode(root) {
+    const qrDataUrl = await createQrCodeDataUrl(CONFIG.SHARE_URL);
+    const qrSection = document.createElement('div');
+    qrSection.className = 'share-qr-section';
+    qrSection.innerHTML = `
+        <div class="share-qr-card">
+            <img class="share-qr-image" src="${qrDataUrl}" alt="分享二维码">
+            <div class="share-qr-text">
+                <div class="share-qr-title">扫码测试你的写作人格</div>
+                <div class="share-qr-url">${CONFIG.SHARE_URL}</div>
+            </div>
+        </div>
+    `;
+
+    root.querySelector('.result-capture-page').appendChild(qrSection);
+}
+
 async function prepareCaptureAvatars(root) {
     const rainbowImages = Array.from(root.querySelectorAll('img.rainbow-border'));
 
@@ -688,6 +748,10 @@ function createResultCaptureNode() {
         btn.remove();
     });
 
+    resultClone.querySelectorAll('.save-area').forEach(area => {
+        area.remove();
+    });
+
     captureContainer.appendChild(resultClone);
     host.appendChild(captureContainer);
     document.body.appendChild(host);
@@ -695,55 +759,54 @@ function createResultCaptureNode() {
     return { host, captureContainer };
 }
 
-async function canvasToPngDataUrl(canvas) {
-    return canvas.toDataURL('image/png');
+async function canvasToDataUrl(canvas, mimeType = 'image/png', quality) {
+    return canvas.toDataURL(mimeType, quality);
 }
 
-function downloadCanvas(canvas, filename) {
-    if (!canvas.toBlob) {
-        const link = document.createElement('a');
-        link.download = filename;
-        link.href = canvas.toDataURL('image/png');
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        return;
+function resetSaveArea() {
+    if (!elements.saveArea || !elements.saveImage || !elements.saveHint) return;
+
+    elements.saveArea.classList.remove('ready', 'failed');
+    elements.saveImage.removeAttribute('src');
+    elements.saveHint.textContent = '图片生成中...';
+}
+
+function setSaveImageSource(imageSrc) {
+    if (!elements.saveArea || !elements.saveImage || !elements.saveHint) return;
+
+    revokeCurrentSaveImageUrl();
+    currentSaveImageUrl = imageSrc;
+    elements.saveImage.src = imageSrc;
+    elements.saveArea.classList.add('ready');
+    elements.saveArea.classList.remove('failed');
+    elements.saveHint.textContent = '长按此处保存图片';
+}
+
+function setSaveImageFailed() {
+    if (!elements.saveArea || !elements.saveHint) return;
+
+    revokeCurrentSaveImageUrl();
+    if (elements.saveImage) {
+        elements.saveImage.removeAttribute('src');
     }
-
-    canvas.toBlob(blob => {
-        if (!blob) {
-            const link = document.createElement('a');
-            link.download = filename;
-            link.href = canvas.toDataURL('image/png');
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            return;
-        }
-
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.download = filename;
-        link.href = url;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-    }, 'image/png');
+    elements.saveArea.classList.add('failed');
+    elements.saveArea.classList.remove('ready');
+    elements.saveHint.textContent = '图片生成失败，请刷新重试';
 }
 
-// 保存结果图片
-async function saveResultImage() {
+function triggerImageDownload(imageSrc, filename) {
+    const link = document.createElement('a');
+    link.href = imageSrc;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+}
+
+async function generateResultImageSource() {
     if (typeof html2canvas === 'undefined') {
-        alert('图片生成库加载失败，请刷新页面重试');
-        return;
+        throw new Error('图片生成库加载失败');
     }
-
-    const saveBtn = document.querySelector('.save-btn');
-    const originalText = saveBtn.textContent;
-    saveBtn.textContent = '生成中...';
-    saveBtn.disabled = true;
 
     let captureHost = null;
 
@@ -761,6 +824,7 @@ async function saveResultImage() {
 
         await waitForImages(target);
         await prepareCaptureAvatars(target);
+        await appendShareQrCode(target);
         await waitForImages(target);
         await waitForNextFrame();
 
@@ -784,21 +848,54 @@ async function saveResultImage() {
         });
 
         if (isWeChat()) {
-            elements.resultImage.src = await canvasToPngDataUrl(canvas);
-            elements.imageModal.style.display = 'flex';
-        } else {
-            downloadCanvas(canvas, '写作人格测试结果.png');
+            return canvasToDataUrl(canvas, 'image/png');
         }
-    } catch (err) {
-        console.error('生成图片失败:', err);
-        alert('生成图片失败，请重试');
+
+        return canvasToDataUrl(canvas, 'image/png');
     } finally {
         if (captureHost) {
             captureHost.remove();
         }
+    }
+}
 
-        saveBtn.textContent = originalText;
-        saveBtn.disabled = false;
+// 生成一张透明承载图。移动端长按该区域时，系统会识别为长按图片。
+async function prepareSaveImage() {
+    resetSaveArea();
+
+    try {
+        const imageSrc = await generateResultImageSource();
+        setSaveImageSource(imageSrc);
+    } catch (err) {
+        console.error('生成图片失败:', err);
+        setSaveImageFailed();
+    }
+}
+
+async function saveResultImage() {
+    try {
+        if (isWeChat()) {
+            const imageSrc = currentSaveImageUrl || await generateResultImageSource();
+            elements.resultImage.src = imageSrc;
+            elements.imageModal.style.display = 'flex';
+            return;
+        }
+
+        if (elements.saveBtn) {
+            elements.saveBtn.disabled = true;
+            elements.saveBtn.textContent = '生成中...';
+        }
+
+        const imageSrc = await generateResultImageSource();
+        triggerImageDownload(imageSrc, '写作人格测试结果.png');
+    } catch (err) {
+        console.error('生成图片失败:', err);
+        alert('生成图片失败，请重试');
+    } finally {
+        if (elements.saveBtn && !isWeChat()) {
+            elements.saveBtn.disabled = false;
+            elements.saveBtn.textContent = '保存图片';
+        }
     }
 }
 
@@ -818,3 +915,4 @@ window.init = init;
 
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', init);
+window.addEventListener('beforeunload', revokeCurrentSaveImageUrl);

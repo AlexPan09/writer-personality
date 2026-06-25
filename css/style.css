@@ -103,6 +103,9 @@ body {
     font-weight: 500;
     width: 100%;
     max-width: 200px;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
     box-shadow: 
         6px 6px 12px #b8bec7,
         -6px -6px 12px #ffffff;
@@ -120,6 +123,15 @@ body {
         inset 4px 4px 8px #b8bec7,
         inset -4px -4px 8px #ffffff;
     transform: translateY(0);
+}
+
+.btn:focus,
+.btn:focus-visible,
+.option:focus,
+.option:focus-visible,
+.collapse-btn:focus,
+.collapse-btn:focus-visible {
+    outline: none;
 }
 
 .btn:disabled {
@@ -209,6 +221,9 @@ body {
     font-size: 0.95rem;
     color: #5a6c7d;
     text-align: left;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
     box-shadow: 
         5px 5px 10px #b8bec7,
         -5px -5px 10px #ffffff;
@@ -481,6 +496,9 @@ body {
     justify-content: center;
     padding: 0;
     z-index: 10;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
     box-shadow:
         4px 4px 8px #b8bec7,
         -4px -4px 8px #ffffff;
@@ -605,6 +623,62 @@ body {
     max-width: none;
 }
 
+.save-area {
+    position: relative;
+    min-height: 76px;
+    margin-top: 18px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #8899aa;
+    font-size: 0.88rem;
+    letter-spacing: 0;
+    text-align: center;
+    overflow: hidden;
+    -webkit-touch-callout: default;
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: pointer;
+}
+
+.btn,
+.option,
+.collapse-btn {
+    -webkit-touch-callout: none;
+}
+
+.save-area.ready {
+    color: #6a7a8a;
+}
+
+.save-area:active {
+    opacity: 0.78;
+}
+
+.save-area.failed {
+    color: #a36d6d;
+}
+
+.save-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.01;
+    object-fit: cover;
+    -webkit-touch-callout: default;
+    user-select: auto;
+    -webkit-user-select: auto;
+    z-index: 2;
+}
+
+.save-area span {
+    position: relative;
+    z-index: 1;
+    pointer-events: none;
+}
+
 .result-capture-host {
     position: fixed;
     left: -10000px;
@@ -682,6 +756,53 @@ body {
 
 .result-capture-page .collapse-btn {
     z-index: 40;
+}
+
+.share-qr-section {
+    margin-top: 8px;
+    padding-top: 20px;
+}
+
+.share-qr-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 14px;
+    background: #e4e9f0;
+    border: 1px solid rgba(176, 186, 199, 0.48);
+    border-radius: 14px;
+    box-shadow:
+        0 10px 22px rgba(174, 183, 195, 0.28),
+        0 -4px 12px rgba(255, 255, 255, 0.58);
+}
+
+.share-qr-image {
+    width: 82px;
+    height: 82px;
+    flex: 0 0 82px;
+    border-radius: 10px;
+    background: #e0e5ec;
+}
+
+.share-qr-text {
+    min-width: 0;
+    flex: 1;
+}
+
+.share-qr-title {
+    color: #5a6c7d;
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: 6px;
+}
+
+.share-qr-url {
+    color: #8899aa;
+    font-size: 0.68rem;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
 }
 
 /* 图片预览弹窗 */
@@ -763,6 +884,9 @@ body {
     max-width: 100%;
     height: auto;
     border-radius: 12px;
+    -webkit-touch-callout: default;
+    user-select: auto;
+    -webkit-user-select: auto;
     box-shadow:
         4px 4px 8px #b8bec7,
         -4px -4px 8px #ffffff;
